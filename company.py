@@ -1,16 +1,80 @@
 import requests
 from bs4 import BeautifulSoup
-
+import rapid_api as API
 from utils import get_google_url, get_yahoo_profile_url, exchanges
+from statements import generate_statement, generate_value
+import json
+
+statement_indicators = {
+    'cashFlow': [
+        {'name': 'netIncome', 'label': 'Net Income'},
+        {'name': 'investments', 'label': 'Investments'},
+        {'name': 'changeInCash', 'label': 'Change in Cash'},
+        {'name': 'changeToLiabilities', 'label': 'Change in Liabilities'},
+        {'name': 'changeToNetincome', 'label': 'Change to Net Income'},
+        {'name': 'totalCashflowsFromInvestingActivities',
+         'label': 'Cash Flow from Investing Activities'},
+        {'name': 'netBorrowings', 'label': 'Net Borrowings'},
+        {'name': 'totalCashFromFinancingActivities',
+         'label': 'Total Cash from Financing Activites'},
+        {'name': 'repurchaseOfStock', 'label': 'Repurchase of Stock'},
+        {'name': 'totalCashFromOperatingActivities',
+         'label': 'Total Cash from Operating Activities'},
+        {'name': 'dividendsPaid', 'label': 'Dividends Paid'},
+        {'name': 'otherCashflowsFromFinancingActivities',
+         'label': 'Other Cash Flow from Financing Activites'},
+        {'name': 'capitalExpenditures', 'label': 'Capital Expenditures'}, ],
+    'incomeStatement': [
+        {'name': 'researchDevelopment', 'label': 'RD'},
+        {'name': 'incomeBeforeTax', 'label': 'Pretax Income'},
+        {'name': 'netIncome', 'label': 'netIncome'},
+        {'name': 'grossProfit', 'label': 'Gross Profit'},
+        {'name': 'operatingIncome', 'label': 'Operating Income'},
+        {'name': 'otherOperatingExpenses', 'label': 'Other Operating Expenses'},
+        {'name': 'incomeTaxExpense', 'label': 'Income Tax Expense'},
+        {'name': 'totalRevenue', 'label': 'Total Revenue'},
+        {'name': 'totalOperatingExpenses', 'label': 'Total Operating expenses'},
+        {'name': 'costOfRevenue', 'label': 'Cost of Revenue'}, ],
+    'balanceSheet': [
+        {'name': 'intangibleAssets', 'label': 'Intangible Assets'},
+        {'name': 'totalLiab', 'label': 'Total Liabilities'},
+        {'name': 'totalStockholderEquity', 'label': 'Total Stockholder Equity'},
+        {'name': 'deferredLongTermLiab', 'label': 'Deferred Long Term Liabilities'},
+        {'name': 'otherCurrentLiab', 'label': 'Other Current Liabilities'},
+        {'name': 'totalAssets', 'label': 'Total Assets'},
+        {'name': 'commonStock', 'label': 'Common Stock'},
+        {'name': 'otherCurrentAssets', 'label': 'Other Current Assets'},
+        {'name': 'retainedEarnings', 'label': 'Retained Earnings'},
+        {'name': 'otherLiab', 'label': 'Other Liabilities'},
+        {'name': 'cash', 'label': 'Cash'},
+        {'name': 'totalCurrentLiabilities', 'label': 'Total Current Liabilities'},
+        {'name': 'deferredLongTermAssetCharges',
+            'label': 'Deferred Long Term Asset Charges'},
+        {'name': 'shortLongTermDebt', 'label': 'Short Long Term Debt'},
+        {'name': 'otherAssets', 'label': 'Other Assets'},
+        {'name': 'totalCurrentAssets', 'label': 'Total Current Assets'},
+        {'name': 'longTermInvestments', 'label': 'Long Term Investments'},
+        {'name': 'netTangibleAssets', 'label': 'Net Tangible Assets'},
+        {'name': 'shortTermInvestments', 'label': 'Short Term Investments'},
+        {'name': 'longTermDebt', 'label': 'Long Term Debt'},
+        {'name': 'inventory', 'label': 'Inventory'},
+        {'name': 'accountsPayable', 'label': 'Accounts Payable'},
+    ]}
 
 
 class PublicCompany:
+
     def __init__(self, company):
         self.company = company
         self.__generate_google_soup()
-        self.__generate_yahoo_profile_soup()
-        self.__set_general_info()
         self.__set_ticker_info()
+        self.__set_general_info()
+        self.__set_competitors()
+        self.__set_year_founded()
+        self.__set_ceo()
+        self.__generate_yahoo_profile_soup()
+        self.__set_number_of_employees()
+        self.__set_statements()
 
     # General soups for various scrapers
     def __generate_google_soup(self):
@@ -64,10 +128,9 @@ class PublicCompany:
             competitors.append(url.get_text())
 
         self.competitor_names = list(filter(lambda c: c != False, competitors))
-        return self.competitor_names
 
     def get_competitors(self):
-        pass
+        return self.competitor_names
 
     # general info
     def __set_general_info(self):
@@ -82,19 +145,17 @@ class PublicCompany:
     def __set_year_founded(self):
         founded_index = self.__general_info.index('founded')
         self.founded_year = self.__general_info[founded_index+1]
-        print(self.founded_year)
 
     def get_year_founded(self):
-        pass
+        return self.founded_year
 
     # CEO
     def __set_ceo(self):
         ceo_index = self.__general_info.index('ceo')
         self.ceo = self.__general_info[ceo_index+1]
-        print(self.ceo)
 
     def get_ceo(self):
-        pass
+        return self.ceo
 
     # Number of Employees
     def __set_number_of_employees(self):
@@ -107,8 +168,35 @@ class PublicCompany:
         self.number_of_employees = profile_info[index_of_employees+1]
 
     def get_number_of_employees(self):
-        pass
+        return self.number_of_employees
 
-    # Balance Sheet
-    def __set_balance_sheet(self):
-        pass
+    # Financial Statements
+    def __set_statements(self):
+        response = API.get_statements(self.ticker_symbol)
+        data = response.json()
+        # Write JSON to company file
+        with open(f'{self.company}.json', 'w') as file:
+            json.dump(data, file)
+
+        statements = json.loads(data)
+        cashflowStatementHistory = statements.get('cashflowStatementHistory')
+        cfs = cashflowStatementHistory.get('cashflowStatements')[0]
+        balanceSheetHistory = statements.get('balanceSheetHistory')
+        bs = balanceSheetHistory.get('balanceSheetStatements')[0]
+        incomeStatementHistory = statements.get('incomeStatementHistory')
+        incs = incomeStatementHistory.get('incomeStatementHistory')[0]
+        self.balance_sheet = generate_statement(
+            statement_indicators['balanceSheet'], bs)
+        self.income_statement = generate_statement(
+            statement_indicators['incomeStatement'], incs)
+        self.cash_flow_statement = generate_statement(
+            statement_indicators['cashFlow'], cfs)
+
+    def get_cash_flow_statement(self):
+        return self.cash_flow_statement
+
+    def get_income_statement(self):
+        return self.income_statement
+
+    def get_balance_sheet(self):
+        return self.balance_sheet
