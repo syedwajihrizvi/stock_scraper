@@ -12,3 +12,11 @@ def get_statements(symbol):
     response = requests.request(
         "GET", url, headers=headers, params=querystring)
     return response
+
+
+def get_financial_data(symbol):
+    url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-summary"
+    querystring = {"symbol": symbol, "region": "US"}
+    response = requests.request(
+        'GET', url, headers=headers, params=querystring)
+    return response
