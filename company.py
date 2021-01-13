@@ -18,8 +18,8 @@ class PublicCompany:
         self.__set_ceo()
         self.__generate_yahoo_profile_soup()
         self.__set_number_of_employees()
-        self.__set_statements()
         self.__set_financial_details()
+        self.__set_statements()
 
     # General soups for various scrapers
     def __generate_google_soup(self):
@@ -84,9 +84,18 @@ class PublicCompany:
         self.__general_info = [span.get_text().lower() for span in spans]
 
     def get_general_info(self):
-        pass
+        return self.__general_info
 
+    def get_general(self):
+        return {
+            'ticker': {'label': 'Ticker', 'value': self.ticker_symbol},
+            'exchange': {'label': 'Exchange', 'value': self.stock_exchange},
+            'year_founded': {'label': 'Year Founded', 'value': self.founded_year},
+            'ceo': {'label': 'CEO', 'value': self.ceo},
+            'num_employees': {'label': 'Number of Employees', 'value': self.number_of_employees}
+        }
     # year founded
+
     def __set_year_founded(self):
         founded_index = self.__general_info.index('founded')
         self.founded_year = self.__general_info[founded_index+1]
@@ -123,11 +132,14 @@ class PublicCompany:
         with open(f'{self.company}_fs.json', 'w') as file:
             json.dump(data, file)
 
-        statements = json.loads(data)
+        statements = data
         cashflowStatementHistory = statements.get('cashflowStatementHistory')
         cfs = cashflowStatementHistory.get('cashflowStatements')[0]
         balanceSheetHistory = statements.get('balanceSheetHistory')
         bs = balanceSheetHistory.get('balanceSheetStatements')[0]
+        with open(f'balance.json', 'w') as file:
+            for key in bs:
+                file.write(f'{key} \n')
         incomeStatementHistory = statements.get('incomeStatementHistory')
         incs = incomeStatementHistory.get('incomeStatementHistory')[0]
         self.balance_sheet = generate_statement(
@@ -152,7 +164,7 @@ class PublicCompany:
         data = response.json()
         with open(f'{self.company}_fd.json', 'w') as file:
             json.dump(data, file)
-        financial_data = json.loads(data)
+        financial_data = data
         key_stats = financial_data.get('defaultKeyStatistics')
         self.ks = generate_statement(indicators.get('keyStats'), key_stats)
         fin_data = financial_data.get('financialData')

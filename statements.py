@@ -1,4 +1,11 @@
 indicators = {
+    'general': [
+        {'name': 'ticker', 'label': 'Ticker'},
+        {'name': 'stock_exchange', 'label': 'Exchange'},
+        {'name': 'Year Founded', 'label': 'Year Founded'},
+        {'name': 'ceo', 'label': 'CEO'},
+        {'name': 'num_employees', 'label': 'Number of Employees'},
+    ],
     'cashFlow': [
         {'name': 'netIncome', 'label': 'Net Income'},
         {'name': 'investments', 'label': 'Investments'},
@@ -29,10 +36,8 @@ indicators = {
         {'name': 'totalOperatingExpenses', 'label': 'Total Operating expenses'},
         {'name': 'costOfRevenue', 'label': 'Cost of Revenue'}, ],
     'balanceSheet': [
-        {'name': 'intangibleAssets', 'label': 'Intangible Assets'},
         {'name': 'totalLiab', 'label': 'Total Liabilities'},
         {'name': 'totalStockholderEquity', 'label': 'Total Stockholder Equity'},
-        {'name': 'deferredLongTermLiab', 'label': 'Deferred Long Term Liabilities'},
         {'name': 'otherCurrentLiab', 'label': 'Other Current Liabilities'},
         {'name': 'totalAssets', 'label': 'Total Assets'},
         {'name': 'commonStock', 'label': 'Common Stock'},
@@ -41,8 +46,6 @@ indicators = {
         {'name': 'otherLiab', 'label': 'Other Liabilities'},
         {'name': 'cash', 'label': 'Cash'},
         {'name': 'totalCurrentLiabilities', 'label': 'Total Current Liabilities'},
-        {'name': 'deferredLongTermAssetCharges',
-            'label': 'Deferred Long Term Asset Charges'},
         {'name': 'shortLongTermDebt', 'label': 'Short Long Term Debt'},
         {'name': 'otherAssets', 'label': 'Other Assets'},
         {'name': 'totalCurrentAssets', 'label': 'Total Current Assets'},
@@ -89,7 +92,7 @@ indicators = {
         {'name': 'totalCashPerShare', 'label': 'Total Cash Per Share'}
     ],
     'summaryDetail': [
-        {'name': 'twoHundedDayAverage', 'label': '200 Day Average'},
+        {'name': 'twoHundredDayAverage', 'label': '200 Day Average'},
         {'name': 'trailingAnnualDividendYield',
             'label': 'Trailing Annual Dividend Yield'},
         {'name': 'fiftyDayAverage', 'label': '50 Day Average'},
