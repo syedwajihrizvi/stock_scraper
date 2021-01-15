@@ -3,7 +3,7 @@ from statements import indicators
 
 
 class ComparitiveSheet:
-    __column_letters = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ' J']
+    __column_letters = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
     def __init__(self, company):
         self.company = company
@@ -19,13 +19,13 @@ class ComparitiveSheet:
     def changeColumnWidth(self, width):
         for sheet in self.__wb:
             sheet.column_dimensions['A'].width = width
-            sheet.column_dimensions['B'].width = width
+            for column in self.__column_letters:
+                sheet.column_dimensions[column].width = width
 
     def create_keys(self, keys, sheet_name):
         cell_number = 1
         sheet = self.__wb[sheet_name]
         sheet['A1'] = 'Key'
-        sheet['B1'] = self.company
         for key in keys:
             cell_number = cell_number + 1
             sheet[f'A{cell_number}'] = key['label']

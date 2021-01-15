@@ -114,8 +114,13 @@ class PublicCompany:
 
     # CEO
     def __set_ceo(self):
-        ceo_index = self.__general_info.index('ceo')
-        self.ceo = self.__general_info[ceo_index+1]
+        ceo_index = 0
+        try:
+            ceo_index = self.__general_info.index('ceo')
+        except ValueError:
+            self.ceo = ''
+        else:
+            self.ceo = self.__general_info[ceo_index+1]
 
     def get_ceo(self):
         return self.ceo

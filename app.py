@@ -2,7 +2,7 @@ from openpyxl import Workbook
 from company import PublicCompany
 from excel import ComparitiveSheet
 from statements import indicators
-
+from send import Sender
 company_name = input('Enter the name of the company: ')
 company = PublicCompany(company_name, False)
 competitors = company.get_competitors()
@@ -40,3 +40,12 @@ for competitor_data in competitors_data:
     excel.upload_data(competitor_data['sum_detail'], column, 'Summary')
     column = column+1
 excel.save()
+
+print('Excel Sheet generated! Enter your email for your report!')
+user_email = input('Email: ')
+sender = Sender(user_email)
+sender.set_info(sender='Stock Analysis', subject='Your Stock Analysis')
+sender.attach_file(
+    "/Users/wajihrizvi/Desktop/python-projects/test.xlsx", 'test.xlsx')
+sender.attach_body('Your analysis is above')
+sender.send_email()
