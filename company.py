@@ -8,18 +8,20 @@ import json
 
 class PublicCompany:
 
-    def __init__(self, company):
+    def __init__(self, company, competitor):
         self.company = company
         self.__generate_google_soup()
+        if (competitor == False):
+            self.__set_competitors()
         self.__set_ticker_info()
-        self.__set_general_info()
-        self.__set_competitors()
-        self.__set_year_founded()
-        self.__set_ceo()
-        self.__generate_yahoo_profile_soup()
-        self.__set_number_of_employees()
-        self.__set_financial_details()
-        self.__set_statements()
+        if (self.get_ticker_info().get('ticker_symbol') != 'Private'):
+            self.__set_general_info()
+            self.__set_year_founded()
+            self.__set_ceo()
+            self.__generate_yahoo_profile_soup()
+            self.__set_number_of_employees()
+            self.__set_financial_details()
+            self.__set_statements()
 
     # General soups for various scrapers
     def __generate_google_soup(self):
@@ -37,21 +39,28 @@ class PublicCompany:
         stock_price = self.__google_soup.find_all(
             'div', class_='BNeawe tAd8D AP7Wnd')
         if not stock_price:
-            return False
+            self.ticker_symbol = 'Private'
+            return
         stock_price = list(filter(lambda parent: len(
-            parent.find_all('div', class_='BNeawe tAd8D AP7Wnd')) > 0, stock_price)).pop()
-
+            parent.find_all('div', class_='BNeawe tAd8D AP7Wnd')) > 0, stock_price))
+        if len(stock_price) == 0:
+            self.ticker_symbol = 'Private'
+            return
+        stock_price = stock_price.pop()
         spans = stock_price.find_all('span', class_='r0bn4c rQMQod')
         ticker_span = [span for span in spans if any(
             ele in span.get_text() for ele in exchanges)]
         if not ticker_span:
-            return False
+            self.ticker_symbol = 'Private'
+            return
         ticker_span = ticker_span.pop().get_text()
         bracket_index = ticker_span.find('(')
         self.ticker_symbol = ticker_span[0:bracket_index]
         self.stock_exchange = ticker_span[bracket_index+1:len(ticker_span)-1]
 
     def get_ticker_info(self):
+        if self.ticker_symbol == 'Private':
+            self.stock_exchange = 'Private'
         return {
             'company': self.company,
             'ticker_symbol': self.ticker_symbol,
@@ -128,20 +137,16 @@ class PublicCompany:
     def __set_statements(self):
         response = API.get_statements(self.ticker_symbol)
         data = response.json()
-        # Write JSON to company file
-        with open(f'{self.company}_fs.json', 'w') as file:
-            json.dump(data, file)
 
         statements = data
         cashflowStatementHistory = statements.get('cashflowStatementHistory')
         cfs = cashflowStatementHistory.get('cashflowStatements')[0]
         balanceSheetHistory = statements.get('balanceSheetHistory')
         bs = balanceSheetHistory.get('balanceSheetStatements')[0]
-        with open(f'balance.json', 'w') as file:
-            for key in bs:
-                file.write(f'{key} \n')
         incomeStatementHistory = statements.get('incomeStatementHistory')
         incs = incomeStatementHistory.get('incomeStatementHistory')[0]
+        with open('test.txt', 'w') as file:
+            file.write(str(bs))
         self.balance_sheet = generate_statement(
             indicators['balanceSheet'], bs)
         self.income_statement = generate_statement(
@@ -160,10 +165,8 @@ class PublicCompany:
 
     # Financial Details
     def __set_financial_details(self):
-        response = API.get_financial_data('AAPL')
+        response = API.get_financial_data(self.ticker_symbol)
         data = response.json()
-        with open(f'{self.company}_fd.json', 'w') as file:
-            json.dump(data, file)
         financial_data = data
         key_stats = financial_data.get('defaultKeyStatistics')
         self.ks = generate_statement(indicators.get('keyStats'), key_stats)
@@ -181,3 +184,14 @@ class PublicCompany:
 
     def get_sum_detail(self):
         return self.sd
+
+    def get_company_data(self):
+        return {
+            'general': self.get_general(),
+            'cash_flow_statement': self.get_cash_flow_statement(),
+            'income_statement': self.get_income_statement(),
+            'balance_sheet': self.get_balance_sheet(),
+            'key_stats': self.get_key_stats(),
+            'fin_data': self.get_fin_data(),
+            'sum_detail': self.get_sum_detail()
+        }

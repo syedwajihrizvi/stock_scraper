@@ -115,6 +115,9 @@ def generate_value(label, value):
 def generate_statement(indicators, data):
     statement = {}
     for indicator in indicators:
+        value = data.get(indicator.get('name'), None)
+        if value != None:
+            value = value.get('fmt')
         statement[indicator.get('name')] = generate_value(
-            label=indicator.get('label'), value=data.get(indicator.get('name')).get('fmt'))
+            label=indicator.get('label'), value=value)
     return statement
