@@ -3,6 +3,7 @@ from company import PublicCompany
 from excel import ComparitiveSheet
 from statements import indicators
 from send import Sender
+
 company_name = input('Enter the name of the company: ')
 company = PublicCompany(company_name, False)
 competitors = company.get_competitors()
